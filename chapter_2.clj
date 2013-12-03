@@ -39,3 +39,103 @@
       (+ (y this) yinc))))
 
 (shift (Point 1 200) 11 200)
+
+;(def add
+;  (fn [this other]
+;    (Point  (+ (x this) (x other))
+;            (+ (y this) (y other)))))
+;
+;(prn (add (Point 1 2) (Point 3 4)))
+
+(def add
+  (fn [this other]
+    (shift this (x other) (y other))))
+
+(prn (add (Point 1 2) (Point 3 4)))
+
+(defn make
+  [type & args]
+    (apply type args))
+
+(prn (make Point 1 2))
+
+(def add
+     (fn [this other]
+       (Point (+ (:x this) (:x other))
+              (+ (:y this) (:y other)))))
+
+(def add
+     (fn [this other]
+       (shifted this (:x other) (:y other))))
+
+(def Triangle
+  (fn [point1 point2 point3]
+    (if (not (= 3 (count (set [point1 point2 point3]))))
+      (throw (new Error (str "Not a triangle:" point1 point2 point3)))
+      {:point1 point1, :point2 point2, :point3 point3})))
+
+(make Triangle
+      (make Point 1 2)
+      (make Point 1 3)
+      (make Point 3 1))
+
+(def point {:x 1, :y 2, :__class_symbol__ 'Point})
+
+(def Point
+     (fn [x y]
+       {:x x,
+        :y y
+        :__class_symbol__ 'Point}))
+
+(def x :x)
+(def y :y)
+(def class-of :__class_symbol__)
+
+(def shift
+     (fn [this xinc yinc]
+       (Point (+ (x this) xinc)
+              (+ (y this) yinc))))
+
+(def Triangle
+     (fn [point1 point2 point3]
+       {:point1 point1, :point2 point2, :point3 point3
+        :__class_symbol__ 'Triangle}))
+
+
+(def right-triangle (Triangle (Point 0 0)
+                              (Point 0 1)
+                              (Point 1 0)))
+
+(def equal-right-triangle (Triangle (Point 0 0)
+                                    (Point 0 1)
+                                    (Point 1 0)))
+
+(def different-triangle (Triangle (Point 0 0)
+                                  (Point 0 10)
+                                  (Point 10 0)))
+
+(def equal-triangles? =)
+
+;; identical
+(equal-triangles? right-triangle right-triangle)
+
+;; not identical, but contents are equal
+(equal-triangles? right-triangle equal-right-triangle)
+
+;; not equal
+(equal-triangles? right-triangle different-triangle)
+
+
+;; multiple
+(equal-triangles? right-triangle right-triangle equal-right-triangle)
+
+(def valid-triangle?
+  (fn [& points]
+    (and (= 3 (count points))
+    (= (distinct points) points))))
+
+(valid-triangle?
+  (make Triangle
+    (make Point 1 2)
+    (make Point 2 2)
+    (make Point 2 3)))
