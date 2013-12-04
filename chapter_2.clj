@@ -13,11 +13,37 @@
 
 (assoc {:a 1} :a 2222)
 
+
 (def Point
-  (fn [x y]
-    {:x x
-     :y y
-     :__class_symbol__ 'Point}))
+     (fn [x y]
+       {:x x,
+        :y y
+        :__class_symbol__ 'Point
+        :__methods__ {
+           :x :x
+           :y :y
+           :class :__class_symbol__
+           :shift (fn [this xinc yinc]
+                    (make Point (+ (send-to this :x) xinc)
+                    (+ (send-to this :y) yinc)))
+           :add (fn [this other]
+                  (send-to this :shift (send-to other :x)
+                                       (send-to other :y)))}}))
+
+(:shift (:__methods__ (make Point 1 2)))
+((:shift (:__methods__ point)) point -2 -3)
+(def point (make Point 1 2))
+
+(def send-to
+       (fn [object message & args]
+                (apply (message (:__methods__ object)) object args)))
+
+(send-to (make Point 10 20) :shift -2 -3)
+
+(prn (send-to (make Point 1 1) :x))
+(prn (send-to (make Point 1 1) :y))
+
+(prn (send-to (make Point 1 1) :add (make Point 10 10)))
 
 ;;(:__class_symbol__ i)
 (def class-of :__class_symbol__)
