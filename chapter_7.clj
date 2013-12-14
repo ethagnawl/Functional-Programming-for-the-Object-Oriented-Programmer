@@ -47,7 +47,7 @@
 (prn (domain-annotations [{:registered 1 :spaces-left 1}]))
 
 (def note-unavailability
-     (fn [courses instructor-count]
+     (fn [courses instructor-count manager?]
        (let [out-of-instructors?
              (= instructor-count
                 (count (filter (fn [course] (not (:empty? course)))
@@ -56,7 +56,9 @@
                 (assoc course
                        :unavailable? (or (:full? course)
                                          (and out-of-instructors?
-                                              (:empty? course)))))
+                                              (:empty? course))
+                                         (and manager?
+                                              (not (:morning? course))))))
               courses))))
 
 (defn annotate
@@ -74,3 +76,53 @@
 (-> [1] first inc (* 3) list) ;; == (list (* 3 (inc (first [1])))) => (6)
 (-> 3 ((fn [n] (* 2 n))) inc)
 (-> (+ 1 2) (* 3) (+ 4)) ;;(+ (* (+ 1 2) 3) 4)
+
+(defn separate
+  [predicate sequence]
+    [
+     (filter predicate sequence)
+     (remove predicate sequence)])
+
+(let
+  [[odds evens] (separate odd? [1 2 3 4]) ]
+  (prn odds)
+  (prn evens))
+
+(defn visible-courses
+  [courses]
+    (let
+      [[guaranteed possibilities] (separate :already-in? courses)]
+        (concat guaranteed (remove :unavailable? possibilities))))
+
+(defn final-shape
+  [courses]
+    (let [desired-keys [:course-name
+                        :morning?
+                        :registered
+                        :spaces-lift
+                        :already-in?]]
+      (map
+        (fn
+          [course]
+            (select-keys course desired-keys))
+        courses)))
+
+(defn half-day-solution
+  [courses registrants-courses instructor-count]
+    (->
+      courses
+      (annotate registrants-courses instructor-count)
+      visible-courses
+      ((fn [courses] (sort-by :course-name courses)))
+      final-shape))
+
+(defn solution
+  [courses registrants-courses instructor-count]
+    (map
+      (fn
+        [courses]
+          (half-day-solution courses registrants-courses instructor-count))
+      (separate :morning? courses)))
+
+{:manager? true
+  :taking-now  ["zig" "zag"]}
