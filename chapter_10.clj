@@ -1,3 +1,5 @@
+(use 'clojure.algo.monads)
+
 ;; dataflow style
 (->
   (+ 1 2)
@@ -121,3 +123,113 @@
         ((fn
           [value2]
             (inc value2)))))))
+
+(def decider
+     (fn [value continuation]
+       (if (oopsie? value)
+         value
+         (continuation value))))
+
+(defn factorial
+  [n]
+  (cond
+    (< n 0)
+      (oops! "Factorial can never be less than zero." :number n)
+    (< n 2)
+      1
+    :else
+      (* n (factorial (dec n)))))
+
+(def maybe-monad
+     (monad [m-result identity
+             m-bind   decider]))
+
+(with-monad maybe-monad
+  (domonad [a nil
+            b (+ 1 a)] ; would blow up
+     b))
+
+;; Error utilities
+(use 'clojure.algo.monads)
+
+(def decider
+     (fn [value continuation]
+       (if (oopsie? value)
+         value
+         (continuation value))))
+
+(def error-monad
+     (monad [m-result identity
+             m-bind   decider]))
+
+(def factorial
+     (fn [n]
+       (cond (< n 0)
+             (oops! "Factorial can never be less than zero." :number n)
+
+             (< n 2)
+             1
+
+             :else
+             (* n (factorial (dec n))))))
+
+(with-monad error-monad
+  (domonad [a -1
+            b (factorial a)
+            c (factorial (- a))]
+     (* a b c)))
+
+(def +?
+  (with-monad maybe-m (m-lift 2 +)))
+
+(prn (+? 1 1))
+
+(def pairwise-plus
+  (with-monad
+    sequence-m
+    (m-lift 2 +)))
+
+(pairwise-plus [1 2 3] [4 5 6])
+
+(def combined-monad (maybe-t sequence-m))
+
+(with-monad
+  combined-monad
+  (domonad
+    [ a [1 nil 3]
+      b [-1 -2]]
+      (* a b)))
+
+;;; Exercise 1
+
+(defn multiples
+  [n]
+    (range (* n 2) 101 n))
+
+(multiples 11)
+
+;;; Exercise 2
+
+;; The Sequence monad version
+(def nonprimes
+  (with-monad sequence-m
+  (domonad
+    [ i (range 2 11)
+      nonprime (multiples i)]
+      nonprime)))
+
+
+;; The `for` version
+(def nonprimes
+  (for [i (range 2 11)
+        nonprime (multiples i)]
+    nonprime))
+
+(nonprimes 11)
+
+;;; Exercise 3
+
+(def primes
+       (remove (set nonprimes) (range 2 101)))
+(prn "Behold! Primes:")
+(prn primes)
